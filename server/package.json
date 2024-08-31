@@ -1,0 +1,16 @@
+{
+  "name": "real-time-leaderboard",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "dev": "nodemon index.js",
+    "serve": "nodemon index.js",
+    "server": "nodemon index.js"
+  },
+  "author": "ghofran565(git username)",
+  "license": "ISC"
+}
