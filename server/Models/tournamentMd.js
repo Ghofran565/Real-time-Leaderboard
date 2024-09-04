@@ -6,7 +6,7 @@ const tournamentSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Tournament name is required.'],
       unique: [true, 'Tournament name is already taken.'],
-      minLength: [3, 'Tournament name must have at least 3 characters.'],
+      minLength: [2, 'Tournament name must have at least 2 characters.'],
       maxLength: [32, 'Tournament name must not exceed 32 characters.'],
     },
     gameId: {
@@ -15,7 +15,8 @@ const tournamentSchema = new mongoose.Schema(
       required: [true, 'Game ID is required.'],
     },
     prize: {
-      type: Object,
+      type: Array,
+      default:[]
     },
     startTime: {
       type: String,
