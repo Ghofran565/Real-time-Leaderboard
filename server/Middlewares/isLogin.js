@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import HandleError from '../Utils/handleError.js';
 import catchAsync from '../Utils/catchAsync.js';
 
-const protect = catchAsync(async (req, res, next) => {
+const isLogin = catchAsync(async (req, res, next) => {
 	let token;
 	if (
 		req.headers.authorization &&
@@ -26,4 +26,4 @@ const protect = catchAsync(async (req, res, next) => {
 	return next();
 });
 
-export default protect;
+export default isLogin;

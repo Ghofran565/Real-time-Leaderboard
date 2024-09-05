@@ -23,7 +23,7 @@ export const getUser = catchAsync(async (req, res, next) => {
 	const { id } = req.params;
 	const { id: userId, role } = req.decodedToken;
 	if (id !== userId && role !== 'admin') {
-		return next(new HandleError('Access denied. Invalid user.', 403));
+		return next(new HandleError('Invalid route', 404)); //puting non-admin user in 404 route
 	}
 	const user = await User.findById(id).select('-password -__v');
 	if (!user) {
@@ -35,7 +35,7 @@ export const getUser = catchAsync(async (req, res, next) => {
 	});
 });
 
-export const updateUser = catchAsync(async (req, res, next) => {
+export const updateUser = catchAsync(async (req, res, next) => { //TODo using decoded token and update
 	const { id } = req.params;
 	const user = await User.findById(id);
 
@@ -80,7 +80,7 @@ export const deleteUser = catchAsync(async (req, res, next) => {
 		return next(new HandleError('User not found.', 404));
 	}
 
-	await Board.deleteMany({ userId: id });
+	await Board.deleteMany({ userId: id }); //TODO new chenges may have prob
 
 	return res.status(200).json({
 		success: true,
