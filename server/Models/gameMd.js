@@ -8,11 +8,11 @@ const gameSchema = new mongoose.Schema(
       minLength: [3, 'Game name must have at least 3 characters.'],
       maxLength: [64, 'Game name must not exceed 64 characters.'],
     },
-    lvlIn: {
-      type: String,
-      minLength: [1, 'Level identifier must have at least 1 character.'],
-      maxLength: [16, 'Level identifier must not exceed 16 characters.'],
-    },
+    // lvlIn: {
+    //   type: String,
+    //   minLength: [1, 'Level identifier must have at least 1 character.'],
+    //   maxLength: [16, 'Level identifier must not exceed 16 characters.'],
+    // },
   },
   { timestamps: true }
 );
