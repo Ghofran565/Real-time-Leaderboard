@@ -23,7 +23,7 @@ export const getUser = catchAsync(async (req, res, next) => {
 	const { id } = req.params;
 	const { id: userId, role } = req.decodedToken;
 	if (id !== userId && role !== 'admin') {
-		return next(new HandleError('Invalid route', 404)); //puting non-admin user in 404 route
+		return next(new HandleError('Invalid route', 404)); //*puting non-admin user in 404 route
 	}
 	const user = await User.findById(id).select('-password -__v');
 	if (!user) {
@@ -35,52 +35,85 @@ export const getUser = catchAsync(async (req, res, next) => {
 	});
 });
 
-export const updateUser = catchAsync(async (req, res, next) => { //TODo using decoded token and update
+export const updateUser = catchAsync(async (req, res, next) => {
+	let updatedUser;
+	let hashPassword;
+	let isPasswordExist = false;
+
 	const { id } = req.params;
-	const user = await User.findById(id);
+	const { id: userId, role: tokenRole } = req.decodedToken;
+	const { role: userRole, password: userPassword, ...others } = req.body;
 
-	if (!user) {
-		return next(new HandleError(`User with ID ${id} not found.`, 404));
+	if (userPassword && !passwordRegex.test(userPassword)) {
+		return next(
+			new HandleError(
+				'Password must be at least 8 characters long and contain at least one letter and one number.',
+				400
+			)
+		);
+	} else if (userPassword) {
+		hashPassword = bcryptjs.hashSync(userPassword, 10);
+		isPasswordExist = true;
 	}
 
-	const {
-		role: userRole = user.role,
-		password: userPass,
-		...others
-	} = req.body;
+	if (tokenRole === 'admin') {
+		updatedUser = await User.findByIdAndUpdate(
+			id,
+			{ role: userRole, usedDiscountCode, ...others },
+			{
+				new: true,
+				runValidators: true,
+			}
+		).select('-password -__v');
 
-	const updatedData = { ...others, role: userRole };
-
-	if (userPass) {
-		updatedData.password = bcryptjs.hashSync(userPass, 10);
+		return res.status(200).json({
+			success: true,
+			message: `User with ID ${id} updated successfully by admin.`,
+			data: { updatedUser },
+		});
+	} else if (id === userId) {
+		if (isPasswordExist) {
+			updatedUser = await User.findByIdAndUpdate(
+				id,
+				{ password: hashPassword, ...others },
+				{
+					new: true,
+					runValidators: true,
+				}
+			).select('-password -__v');
+		} else {
+			updatedUser = await User.findByIdAndUpdate(id, others, {
+				new: true,
+				runValidators: true,
+			}).select('-password -__v');
+		}
+		return res.status(200).json({
+			success: true,
+			message: `User with ID ${id} updated successfully by user themselves.`,
+			data: { updatedUser },
+		});
+	} else {
+		return next(new HandleError('Invalid route', 404)); //*puting non-admin user in 404 route
 	}
-
-	const updatedUser = await User.findByIdAndUpdate(id, updatedData, {
-		new: true,
-		runValidators: true,
-	});
-
-	return res.status(200).json({
-		success: true,
-		message: `User with ID ${id} updated successfully.`,
-		data: {
-			id: updatedUser._id,
-			nametag: updatedUser.nametag,
-			email: updatedUser.email,
-			role: updatedUser.role,
-		},
-	});
 });
 
 export const deleteUser = catchAsync(async (req, res, next) => {
 	const { id } = req.params;
+	const { id: userId, role: tokenRole } = req.decodedToken;
+
+	if (id !== userId && tokenRole !== 'admin') {
+		return next(new HandleError('Invalid route', 404)); //*puting non-admin&&non-self user in 404 route
+	}
 
 	const user = await User.findByIdAndDelete(id);
 	if (!user) {
 		return next(new HandleError('User not found.', 404));
 	}
 
-	await Board.deleteMany({ userId: id }); //TODO new chenges may have prob
+	await Board.updateMany(
+		{ 'userData.userId': userId },
+		{ $pull: { userData: { userId: userId } } }
+	);
 
 	return res.status(200).json({
 		success: true,
