@@ -20,7 +20,7 @@ const generateToken = (user, additionalPayload = {}) => {
 };
 
 export const register = catchAsync(async (req, res, next) => {
-	const { email, password, nametag } = req.body;
+	const { email, password, nametag } = req?.body;
 
 	if (!emailRegex.test(email)) {
 		return next(new HandleError('Invalid email format.', 400));
@@ -67,7 +67,7 @@ export const register = catchAsync(async (req, res, next) => {
 });
 
 export const auth = catchAsync(async (req, res, next) => {
-	const { email } = req.body;
+	const { email } = req?.body;
 	if (!emailRegex.test(email)) {
 		return next(new HandleError('Invalid email format.', 400));
 	}
@@ -90,7 +90,7 @@ export const auth = catchAsync(async (req, res, next) => {
 });
 
 export const sendingEmailCode = catchAsync(async (req, res, next) => {
-	const { email } = req.body;
+	const { email } = req?.body;
 	if (!emailRegex.test(email)) {
 		return next(new HandleError('Invalid email format.', 400));
 	}
@@ -102,7 +102,7 @@ export const sendingEmailCode = catchAsync(async (req, res, next) => {
 });
 
 export const verifyingEmailCode = catchAsync(async (req, res, next) => {
-	const { email, code } = req.body;
+	const { email, code } = req?.body;
 
 	if (!emailRegex.test(email)) {
 		return next(new HandleError('Invalid email format.', 400));
@@ -139,7 +139,7 @@ export const verifyingEmailCode = catchAsync(async (req, res, next) => {
 });
 
 export const forgetPassword = catchAsync(async (req, res, next) => {
-	const { email } = req.body;
+	const { email } = req?.body;
 	if (!emailRegex.test(email)) {
 		return next(new HandleError('Invalid email format.', 400));
 	}
@@ -155,7 +155,7 @@ export const forgetPassword = catchAsync(async (req, res, next) => {
 });
 
 export const checkForgetPassword = catchAsync(async (req, res, next) => {
-	const { email, code } = req.body;
+	const { email, code } = req?.body;
 	if (!emailRegex.test(email)) {
 		return next(new HandleError('Invalid email format.', 400));
 	}
@@ -180,7 +180,7 @@ export const checkForgetPassword = catchAsync(async (req, res, next) => {
 });
 
 export const changePassword = catchAsync(async (req, res, next) => {
-	const { id: bodyId, password } = req.body;
+	const { id: bodyId, password } = req?.body;
 	const { id, changePassword } = req.decodedToken;
 
 	if (!changePassword) {
