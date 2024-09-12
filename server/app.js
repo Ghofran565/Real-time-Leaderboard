@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import cors from 'cors';
+import catchError from './Utils/catchError.js';
+import HandleError from './Utils/handleError.js';
 
 ///* custom imports *\\\
 import authRouter from './Routes/auth.js';
