@@ -3,11 +3,11 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { __dirname } from "./app.js";
 
-import { scheduleActiveTournaments } from './Controllers/tournamentCn.js';
+// import { scheduleActiveTournaments } from './Controllers/tournamentCn.js'; //!have to wait for the "build server" time
 
 dotenv.config({ path: `${__dirname}/config.env` });
 
-await scheduleActiveTournaments();
+//await scheduleActiveTournaments(); //?have to wait for the "build server" time
 
 const port = process.env.PORT;
 
