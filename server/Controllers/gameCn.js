@@ -66,8 +66,8 @@ export const deleteGame = catchAsync(async (req, res, next) => {
 		return next(new HandleError('Game not found.', 404));
 	}
 
-	await Board.deleteMany({ gameId: id });
-	await Tournament.deleteMany({ gameId: id });
+	await Board.deleteMany({ gameId: id }); //! maybe just onedelete needed
+	await Tournament.deleteMany({ gameId: id });//! maybe just onedelete needed
 
 	return res.status(200).json({
 		success: true,
