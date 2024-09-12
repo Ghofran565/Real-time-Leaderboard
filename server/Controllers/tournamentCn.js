@@ -4,7 +4,6 @@ import Tournament from '../Models/tournamentMd.js';
 import Board from '../Models/boardMd.js';
 
 export const getAllTournament = catchAsync(async (req, res, next) => {
-	// Fetch all tournaments
 	const tournaments = await Tournament.find().populate('gameId');
 	return res.status(200).json({
 		success: true,
@@ -15,26 +14,89 @@ export const getAllTournament = catchAsync(async (req, res, next) => {
 });
 
 export const addTournament = catchAsync(async (req, res, next) => {
-	const tournament = await Tournament.create(req.body);
+	const tournament = req.body;
 
-	const currentTime = Date.now();
-	const startTime = parseInt(tournament.startTime, 10);
+	const now = Date.now();
 
-	if (startTime <= currentTime) {
-		scheduleTournamentEnd(tournament);
-	} //
+  const startTime = parseInt(tournament.startTime, 10);
+  const endTime = parseInt(tournament.endTime, 10);
 
-	res.status(201).json({
-		success: true,
-		data: tournament,
-		message: 'Tournament created successfully.',
-	});
+  if (startTime >= endTime) {
+    return next(new HandleError('End time cannot be before start time.'));
+  }
+
+  if (now >= endTime) {
+    return next(new HandleError('End time cannot be before now.'));
+  }
+
+  // Check for existing active tournament for the same game
+  const activeTournament = await Tournament.findOne({
+    gameId: tournament.gameId,
+    status: 'active',
+  });
+
+  if (activeTournament) {
+    return next(new HandleError('There can only be one active tournament per game.'));
+  }
+
+  // Check for overlapping times with other tournaments for the same game
+  const overlappingTournaments = await Tournament.find({
+    gameId: tournament.gameId,
+    $or: [
+      {
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime },
+      },
+      { startTime: { $lt: startTime }, endTime: { $gt: endTime } }, // Fully contained within existing tournament
+    ],
+  });
+
+  if (overlappingTournaments.length > 0) {
+    return next(new HandleError('New tournament conflicts with existing tournament times.'));
+  }
+
+  const createdTournament = await Tournament.create(tournament);
+
+  const currentTime = Date.now();
+  if (startTime <= currentTime) {
+    scheduleTournamentEnd(createdTournament);
+  }
+
+  res.status(201).json({
+    success: true,
+    data: createdTournament,
+    message: 'Tournament created successfully.',
+  });
 });
+
+export const allCurrentTournament = catchAsync(async (req, res, next) => {
+	const now = Date.now();
+
+	// Find current active tournaments (if any)
+	const activeTournaments = await Tournament.find({
+		startTime: { $lte: now },
+		endTime: { $gte: now },
+	}).populate('gameId');
+
+	// If active tournaments is found, return it
+	if (activeTournaments) {
+		return res.status(200).json({
+			success: true,
+			data: {
+			 activeTournaments
+			},
+		});
+	}
+});
+
 export const currentTournament = catchAsync(async (req, res, next) => {
-	const now = Date.now(); // Get the current timestamp in milliseconds
+	const { id:gameId } = req.params;
+
+	const now = Date.now();
 
 	// Find the current active tournament (if any)
 	const activeTournament = await Tournament.findOne({
+		gameId,
 		startTime: { $lte: now },
 		endTime: { $gte: now },
 	}).populate('gameId');
@@ -51,6 +113,7 @@ export const currentTournament = catchAsync(async (req, res, next) => {
 
 	// No active tournament, find the next upcoming tournament
 	const nextTournament = await Tournament.findOne({
+		gameId,
 		startTime: { $gt: now },
 	})
 		.sort({ startTime: 1 }) // Sort by start time to get the closest upcoming tournament
@@ -77,26 +140,6 @@ export const currentTournament = catchAsync(async (req, res, next) => {
 	});
 });
 
-export const submitTournament = catchAsync(async (req, res, next) => {});
-
-export const updateTournament = catchAsync(async (req, res, next) => {
-	const { id } = req.params;
-	const updatedTournament = await Tournament.findByIdAndUpdate(id, req.body, {
-		new: true,
-		runValidators: true,
-	});
-
-	if (!updatedTournament) {
-		return next(new HandleError(`Tournament with ID ${id} not found.`, 404));
-	}
-
-	return res.status(200).json({
-		success: true,
-		message: `Tournament with ID ${id} updated successfully.`,
-		data: { updatedTournament },
-	});
-});
-
 export const deleteTournament = catchAsync(async (req, res, next) => {
 	const { id } = req.params;
 	const deletedTournament = await Tournament.findByIdAndDelete(id);
@@ -118,6 +161,8 @@ const distributePrizes = async (tournament) => {
 	const board = await Board.find({ tournamentId: tournament._id }).sort({
 		score: -1,
 	});
+
+//todo solveing prob about board
 
 	if (!board.length) {
 		console.log(`No participants for tournament ${tournament.name}.`);
