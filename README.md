@@ -1,3 +1,7 @@
+# Important
+the creator is not working more on this project
+this project was canceled and may not be continued by the creator
+
 # Real-time-Leaderboard
 This project is based on Node.js backend programming. 
 
